@@ -6,8 +6,6 @@ import { useNavigate } from "react-router-dom";
 import { FcGoogle } from "react-icons/fc";
 import { FaApple, FaFacebook, FaTiktok, FaUnlockAlt } from "react-icons/fa"; // 🔑 Import FaUnlockAlt
 
-const API_BASE_URL = import.meta.env.VITE_BACKEND_URL || "https://pbo-skyfly-backend-production.up.railway.app";
-
 export default function LoginPage({ onLogin }) {
     const navigate = useNavigate();
     const [identifier, setIdentifier] = useState("");
@@ -15,7 +13,7 @@ export default function LoginPage({ onLogin }) {
     const [errorMessage, setErrorMessage] = useState("");
     const [isLoading, setIsLoading] = useState(false);
 
-    async function submit(e) {
+    function submit(e) {
         e.preventDefault();
         setErrorMessage("");
         setIsLoading(true);
@@ -26,47 +24,39 @@ export default function LoginPage({ onLogin }) {
             return;
         }
 
+        // ========================================================
+        // 🚀 JALUR BYPASS (MEMUTUS KONEKSI BACKEND)
+        // ========================================================
         try {
-            const response = await fetch(`${API_BASE_URL}/api/auth/login`, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ identifier, password }),
-            });
+            // Membuat data dummy lokal seolah-olah didapat dari database backend
+            const dummyUser = {
+                id: "dummy-123",
+                name: "User Demo SkyFly",
+                email: identifier.includes("@") ? identifier : "demo@skyfly.com",
+                phone: !identifier.includes("@") ? identifier : "08123456789",
+                role: "user" // Set jadi 'user' biasa agar masuk ke Home Page utama
+            };
 
-            if (!response.ok) {
-                const errorData = await response.json();
-                throw new Error(errorData.message || "Login gagal. Periksa kredensial Anda.");
-            }
-            
-            const data = await response.json();
+            const dummyToken = "mock-jwt-token-skyfly-local-bypass";
 
-            // KUNCI SINKRON: "userToken" dan "userInfo"
-            localStorage.setItem("userToken", data.token); 
-            localStorage.setItem("userInfo", JSON.stringify(data.user)); 
+            // SINKRONISASI LOCAL STORAGE (Meniru skema asli aplikasi Anda)
+            localStorage.setItem("userToken", dummyToken); 
+            localStorage.setItem("userInfo", JSON.stringify(dummyUser)); 
             
             if (onLogin) {
-                onLogin(data.user);
+                onLogin(dummyUser);
             }
             
-            // LOGIKA PENGALIHAN BERDASARKAN ROLE
-            if (data.user.role === 'admin') {
-                navigate("/admin"); // Arahkan Admin ke Dashboard Admin
-            } else {
-                navigate("/"); // Arahkan user biasa ke Home Page
-            }
+            // Langsung arahkan ke Home Page utama tanpa perlu tunggu respon server
+            navigate("/");
 
         } catch (err) {
-            console.error("Login API error:", err);
-            setIsLoading(false);
-            
-            if (err.message.includes("Failed to fetch")) {
-                setErrorMessage("Koneksi ke server gagal. Pastikan server Anda berjalan di port 5000.");
-            } else {
-                setErrorMessage(err.message);
-            }
+            console.error("Bypass login error:", err);
+            setErrorMessage("Terjadi kesalahan pada login bypass lokal.");
         } finally {
             setIsLoading(false);
         }
+        // ========================================================
     }
 
     function loginWithGoogle() {
@@ -85,7 +75,7 @@ export default function LoginPage({ onLogin }) {
                 <h1 className="text-3xl font-bold text-blue-600 mb-1">
                     skyfly <span className="text-yellow-400">•</span>
                 </h1>
-                <p className="text-gray-500 text-sm mb-6">Pemesanan tiket pesawat</p>
+                <p className="text-gray-500 text-sm mb-6">Pemesanan tiket pesawat (Offline Mode)</p>
 
                 <button
                     onClick={loginWithGoogle}
@@ -152,7 +142,7 @@ export default function LoginPage({ onLogin }) {
                                     <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                                 </svg>
                                 Memproses...
-                            </span>
+                             </span>
                         ) : "Lanjutkan"}
                     </button>
 
@@ -167,7 +157,7 @@ export default function LoginPage({ onLogin }) {
                     </div>
                 </form>
 
-                {/* 🔑 PERBAIKAN: TOMBOL LOGIN ADMIN BARU */}
+                {/* 🔑 TOMBOL LOGIN ADMIN */}
                 <div className="flex items-center gap-3 mt-6 mb-4">
                     <div className="h-[1px] flex-1 bg-gray-300"></div>
                 </div>
@@ -177,22 +167,10 @@ export default function LoginPage({ onLogin }) {
                 >
                     <FaUnlockAlt /> Login sebagai Admin
                 </button>
-                {/* -------------------------------------- */}
-
 
                 <div className="flex justify-center gap-5 text-gray-700 mt-6">
                     {/* ... (Social media buttons) ... */}
                 </div>
-
-                <p className="text-xs text-gray-500 mt-6 leading-relaxed">
-                    Dengan log in, kamu menyetujui{" "}
-                    <span className="text-blue-600 cursor-pointer">Kebijakan Privasi</span>{" "}
-                    dan{" "}
-                    <span className="text-blue-600 cursor-pointer">
-                        Syarat & Ketentuan
-                    </span>{" "}
-                    SkyFly.
-                </p>
             </div>
         </section>
     );
